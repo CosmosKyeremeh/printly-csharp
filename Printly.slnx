@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Printly.Core/Printly.Core.csproj" />
+    <Project Path="src/Printly.Infrastructure/Printly.Infrastructure.csproj" />
+  </Folder>
+</Solution>
