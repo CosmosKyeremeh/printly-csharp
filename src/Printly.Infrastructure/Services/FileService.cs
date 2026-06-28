@@ -153,7 +153,7 @@ public class FileService : IFileService
         return await GetFileByIdAsync(fileId, userId, orgId);
     }
 
-    // -- Private Helpers ----------------------------------------------------
+    // ── Private Helpers ────────────────────────────────────────────────────
 
     private async Task<FileResponse> MapToResponseAsync(FileRecord file, Guid orgId)
     {

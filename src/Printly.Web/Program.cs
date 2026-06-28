@@ -8,16 +8,17 @@ using Printly.Infrastructure.Data;
 using Printly.Infrastructure.Services;
 using Printly.Infrastructure.Storage;
 using Printly.Web.Hubs;
+using Printly.Web.Services;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// â”€â”€ 1. DATABASE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── 1. DATABASE ────────────────────────────────────────────────────────────
 builder.Services.AddDbContext<PrintlyDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// â”€â”€ 2. IDENTITY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── 2. IDENTITY ────────────────────────────────────────────────────────────
 builder.Services.AddIdentity<AppUser, IdentityRole<Guid>>(options =>
 {
     options.Password.RequireDigit = true;
@@ -29,27 +30,27 @@ builder.Services.AddIdentity<AppUser, IdentityRole<Guid>>(options =>
 .AddEntityFrameworkStores<PrintlyDbContext>()
 .AddDefaultTokenProviders();
 
-// â”€â”€ 3. JWT AUTHENTICATION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// This tells ASP.NET Core HOW to validate incoming JWT tokens.
-// Every request that hits an [Authorize] endpoint goes through this first.
-//
-// TokenValidationParameters defines the rules:
-//   ValidateIssuerSigningKey â†’ verify the signature using our secret key
-//   ValidateIssuer           â†’ check the token was issued by "printly"
-//   ValidateAudience         â†’ check the token is meant for "printly-users"
-//   ValidateLifetime         â†’ reject expired tokens automatically
+// ── 3. AUTHENTICATION — Cookie + JWT ──────────────────────────────────────
+// Razor Pages use cookies (browser-friendly).
+// API Controllers use JWT Bearer tokens (API-friendly).
+// We support both simultaneously.
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("JWT key not configured.");
 
 builder.Services.AddAuthentication(options =>
 {
-    // Set JWT as the default scheme for both authentication and challenge.
-    // "Challenge" = what happens when an unauthenticated request hits [Authorize]
-    // Without this, Identity would redirect to a login page instead of returning 401.
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    // Razor Pages will use cookie scheme by default
+    options.DefaultScheme = "CookieOrJwt";
+    options.DefaultChallengeScheme = "CookieOrJwt";
 })
-.AddJwtBearer(options =>
+.AddCookie("Cookies", options =>
+{
+    options.LoginPath = "/auth/login";
+    options.AccessDeniedPath = "/auth/login";
+    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    options.SlidingExpiration = true;
+})
+.AddJwtBearer("JWT", options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -61,14 +62,10 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidAudience = builder.Configuration["Jwt:Audience"],
         ValidateLifetime = true,
-        // ClockSkew is a grace period for token expiry.
-        // Default is 5 minutes â€” we set it to zero for strict expiry.
         ClockSkew = TimeSpan.Zero
     };
 
-    // SignalR sends the JWT as a query parameter (?access_token=...)
-    // because WebSocket connections cannot set HTTP headers.
-    // This block reads it from the query string for hub connections.
+    // SignalR sends JWT as query param for WebSocket connections
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
@@ -83,17 +80,30 @@ builder.Services.AddAuthentication(options =>
             return Task.CompletedTask;
         }
     };
+})
+// Policy scheme picks the right auth scheme based on the request
+.AddPolicyScheme("CookieOrJwt", "CookieOrJwt", options =>
+{
+    options.ForwardDefaultSelector = context =>
+    {
+        // API routes and hubs use JWT
+        var path = context.Request.Path;
+        if (path.StartsWithSegments("/api") ||
+            path.StartsWithSegments("/hubs"))
+            return "JWT";
+
+        // Everything else (Razor Pages) uses cookies
+        return "Cookies";
+    };
 });
 
-// â”€â”€ 4. AUTHORIZATION POLICIES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── 4. AUTHORIZATION ───────────────────────────────────────────────────────
 builder.Services.AddAuthorization();
 
-// â”€â”€ 5. SIGNALR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// AddSignalR registers the SignalR services in the DI container.
-// This enables IHubContext<T> to be injected anywhere.
+// ── 5. SIGNALR ────────────────────────────────────────────────────────────
 builder.Services.AddSignalR();
 
-// â”€â”€ 6. APPLICATION SERVICES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── 6. APPLICATION SERVICES ───────────────────────────────────────────────
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CurrentUserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -106,43 +116,15 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IStorageService, LocalStorageService>();
 builder.Services.AddScoped<INotificationPusher, SignalRNotificationPusher>();
 
-// â”€â”€ 7. MVC + RAZOR + SWAGGER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── 7. MVC + RAZOR + SWAGGER ──────────────────────────────────────────────
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    // Tell Swagger to accept JWT tokens in the Authorization header.
-    // This adds a padlock icon to each endpoint in the Swagger UI.
-    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "Enter your JWT token. Example: eyJhbGciOi..."
-    });
-    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
-    {
-        {
-            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-            {
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference
-                {
-                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
-    });
-});
+builder.Services.AddSwaggerGen();
 
-// â”€â”€ BUILD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var app = builder.Build();
 
-// â”€â”€ 8. SEED DATABASE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── 8. SEED DATABASE ──────────────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<PrintlyDbContext>();
@@ -151,8 +133,7 @@ using (var scope = app.Services.CreateScope())
     await DatabaseSeeder.SeedAsync(context, userManager, roleManager);
 }
 
-// â”€â”€ 9. MIDDLEWARE PIPELINE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// ORDER MATTERS â€” each request flows top to bottom through this chain.
+// ── 9. MIDDLEWARE ─────────────────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -160,21 +141,14 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();       // serves wwwroot/ (CSS, JS, Bootstrap)
+app.UseStaticFiles();
 app.UseRouting();
-
-// Authentication must come BEFORE Authorization.
-// UseAuthentication reads the JWT and sets HttpContext.User.
-// UseAuthorization then checks HttpContext.User against [Authorize] policies.
 app.UseAuthentication();
 app.UseAuthorization();
 
-// â”€â”€ 10. ENDPOINT MAPPING â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── 10. ENDPOINTS ─────────────────────────────────────────────────────────
 app.MapControllers();
 app.MapRazorPages();
-
-// Map the SignalR hub to its URL.
-// Clients connect to wss://yourapp/hubs/notifications
 app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();

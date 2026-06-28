@@ -1,0 +1,114 @@
+﻿@page
+@model AdminDashboardModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0">
+        <i class="bi bi-speedometer2 me-2 text-primary"></i>Admin Dashboard
+    </h4>
+    <div class="d-flex align-items-center gap-2">
+    <span class="badge bg-primary fs-6">@Model.OrgName</span>
+    <span class="text-muted small">Join Code:</span>
+    <code class="bg-dark border border-secondary rounded px-2 py-1 text-primary fw-bold"
+          id="joinCode">@Model.JoinCode</code>
+    <button class="btn btn-sm btn-outline-secondary"
+            onclick="navigator.clipboard.writeText('@Model.JoinCode');this.innerHTML='<i class=\'bi bi-check-lg\'></i>'">
+        <i class="bi bi-clipboard"></i>
+    </button>
+</div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-3">
+        <div class="card text-center p-3">
+            <i class="bi bi-hourglass-split fs-2 text-warning"></i>
+            <h3 class="mt-2 mb-0">@Model.QueuedCount</h3>
+            <small class="text-muted">Queued</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center p-3">
+            <i class="bi bi-printer fs-2 text-info"></i>
+            <h3 class="mt-2 mb-0">@Model.PrintingCount</h3>
+            <small class="text-muted">Printing</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center p-3">
+            <i class="bi bi-check-circle fs-2 text-success"></i>
+            <h3 class="mt-2 mb-0">@Model.DoneCount</h3>
+            <small class="text-muted">Done Today</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center p-3">
+            <i class="bi bi-people fs-2 text-primary"></i>
+            <h3 class="mt-2 mb-0">@Model.TotalUsers</h3>
+            <small class="text-muted">Students</small>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between">
+                <span><i class="bi bi-list-ol me-2"></i>Live Queue</span>
+                <a href="/admin/queue" class="btn btn-sm btn-primary">
+                    Manage Full Queue <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.RecentQueue.Any())
+                {
+                    <p class="text-muted text-center py-4">Queue is empty</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>File</th>
+                                    <th>Student</th>
+                                    <th>Status</th>
+                                    <th>Payment</th>
+                                    <th>Price</th>
+                                    <th>Queued At</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.RecentQueue)
+                                {
+                                    <tr>
+                                        <td>@item.FileName</td>
+                                        <td>@item.UploaderName</td>
+                                        <td>
+                                            <span class="badge badge-@item.Status.ToLower()">
+                                                @item.Status
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-@item.PaymentStatus.ToLower()">
+                                                @item.PaymentStatus
+                                            </span>
+                                        </td>
+                                        <td>GHS @item.Price.ToString("F2")</td>
+                                        <td>
+                                            <small class="text-muted">
+                                                @item.QueuedAt.ToString("MMM d, HH:mm")
+                                            </small>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+

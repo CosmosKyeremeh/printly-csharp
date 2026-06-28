@@ -1,0 +1,83 @@
+﻿:root {
+    --printly-navy: #1B4F72;
+    --printly-blue: #2E86C1;
+    --printly-light: #D6EAF8;
+}
+
+body {
+    background-color: #0f1117;
+    color: #e2e8f0;
+    font-family: "Inter", system-ui, sans-serif;
+}
+
+.navbar {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+/* Cards */
+.card {
+    background-color: #1a1f2e;
+    border: 1px solid #2d3748;
+    border-radius: 12px;
+}
+
+.card-header {
+    background-color: #1B4F72;
+    border-bottom: 1px solid #2E86C1;
+    border-radius: 12px 12px 0 0 !important;
+    font-weight: 600;
+}
+
+/* Status badges */
+.badge-queued    { background-color: #4a5568; }
+.badge-printing  { background-color: #d69e2e; }
+.badge-done      { background-color: #38a169; }
+.badge-cancelled { background-color: #e53e3e; }
+.badge-pending   { background-color: #805ad5; }
+.badge-paid      { background-color: #38a169; }
+.badge-failed    { background-color: #e53e3e; }
+
+/* Upload zone */
+.upload-zone {
+    border: 2px dashed #2E86C1;
+    border-radius: 12px;
+    padding: 3rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: #1a1f2e;
+}
+
+.upload-zone:hover,
+.upload-zone.drag-over {
+    border-color: #5ba8d4;
+    background-color: #1e2a3a;
+}
+
+/* Tables */
+.table-dark {
+    --bs-table-bg: #1a1f2e;
+    --bs-table-striped-bg: #1e2535;
+    --bs-table-hover-bg: #232d42;
+    --bs-table-border-color: #2d3748;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: #2E86C1;
+    border-color: #2E86C1;
+}
+
+.btn-primary:hover {
+    background-color: #1B4F72;
+    border-color: #1B4F72;
+}
+
+/* Notification bell pulse */
+@keyframes pulse {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.bell-pulse { animation: pulse 0.4s ease; }
