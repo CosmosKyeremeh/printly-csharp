@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+ï»¿using Microsoft.EntityFrameworkCore;
 using Printly.Core.DTOs.Requests;
 using Printly.Core.DTOs.Responses;
 using Printly.Core.Entities;
@@ -10,10 +10,14 @@ namespace Printly.Infrastructure.Services;
 public class NotificationService : INotificationService
 {
     private readonly PrintlyDbContext _context;
+    private readonly INotificationPusher _pusher;
 
-    public NotificationService(PrintlyDbContext context)
+    public NotificationService(
+        PrintlyDbContext context,
+        INotificationPusher pusher)
     {
         _context = context;
+        _pusher = pusher;
     }
 
     public async Task<List<NotificationResponse>> GetOrgNotificationsAsync(
@@ -31,7 +35,6 @@ public class NotificationService : INotificationService
             Title = n.Title,
             Message = n.Message,
             Type = n.Type.ToString(),
-            // Check if this user's ID is in the ReadByUserIds array
             IsRead = n.ReadByUserIds.Contains(userId),
             CreatedByName = n.CreatedBy?.FullName ?? "Admin",
             CreatedAt = n.CreatedAt
@@ -55,8 +58,13 @@ public class NotificationService : INotificationService
         _context.Notifications.Add(notification);
         await _context.SaveChangesAsync();
 
-        // SignalR push will be added in Step 7
-        // when we wire up the NotificationHub.
+        await _pusher.PushToOrgAsync(orgId.ToString(), "ReceiveNotification", new
+        {
+            title = notification.Title,
+            message = notification.Message,
+            type = notification.Type.ToString(),
+            createdAt = notification.CreatedAt
+        });
 
         return new NotificationResponse
         {
@@ -77,8 +85,6 @@ public class NotificationService : INotificationService
 
         foreach (var notification in notifications)
         {
-            // Only add the userId if it's not already in the list.
-            // Contains() on a List<Guid> is an in-memory check — fast.
             if (!notification.ReadByUserIds.Contains(userId))
                 notification.ReadByUserIds.Add(userId);
         }
@@ -88,8 +94,6 @@ public class NotificationService : INotificationService
 
     public async Task<int> GetUnreadCountAsync(Guid userId, Guid orgId)
     {
-        // Count notifications where the userId is NOT in ReadByUserIds.
-        // EF Core translates this to a Postgres ANY() array query.
         return await _context.Notifications
             .CountAsync(n =>
                 n.OrgId == orgId &&
