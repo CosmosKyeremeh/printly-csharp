@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Printly.Core.Entities;
 using Printly.Core.Interfaces;
@@ -36,6 +36,7 @@ builder.Services.AddScoped<IQueueService, QueueService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 // File Storage Layer registration
 builder.Services.AddScoped<IStorageService, LocalStorageService>();
@@ -83,3 +84,4 @@ app.MapRazorPages();
 app.MapControllers();
 
 app.Run();
+
