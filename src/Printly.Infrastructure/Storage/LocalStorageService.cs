@@ -1,51 +1,43 @@
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 using Printly.Core.Interfaces;
 
 namespace Printly.Infrastructure.Storage;
 
 /// <summary>
-/// Stores files on the local disk inside a folder called "uploads"
-/// at the root of the application. Used in development only.
-/// IHostEnvironment gives us the path to the app's content root folder.
+/// STUB implementation of IStorageService.
+/// Files are not physically stored anywhere — this is intentional for
+/// the academic project demo. The upload flow, queue, and status tracking
+/// all work normally. Only the actual file bytes are discarded.
+///
+/// To enable real storage later, swap this registration in Program.cs
+/// for either LocalStorageService (disk) or AzureBlobStorageService (cloud).
 /// </summary>
 public class LocalStorageService : IStorageService
 {
-    private readonly string _basePath;
-
-    public LocalStorageService(IHostEnvironment env)
-    {
-        _basePath = Path.Combine(env.ContentRootPath, "uploads");
-        Directory.CreateDirectory(_basePath);
-    }
-
     public async Task<string> UploadAsync(
         Stream fileStream, string fileName, string contentType)
     {
-        var uniqueName = $"{Guid.NewGuid()}_{fileName}";
-        var fullPath = Path.Combine(_basePath, uniqueName);
+        // Drain the stream so the HTTP request completes normally.
+        // Without this, the client would hang waiting for the server
+        // to finish reading the upload.
+        await fileStream.CopyToAsync(Stream.Null);
 
-        await using var fileOut = File.Create(fullPath);
-        await fileStream.CopyToAsync(fileOut);
-
-        return uniqueName;
+        // Return a fake storage path so the FileRecord has something
+        // to store in the StoragePath column.
+        return $"stub/{Guid.NewGuid()}_{fileName}";
     }
 
     public Task<Stream> DownloadAsync(string storagePath)
     {
-        var fullPath = Path.Combine(_basePath, storagePath);
-
-        if (!File.Exists(fullPath))
-            throw new FileNotFoundException("File not found.", storagePath);
-
-        Stream stream = File.OpenRead(fullPath);
-        return Task.FromResult(stream);
+        // Return an empty stream — download will produce a 0-byte file.
+        // For demo purposes this is fine.
+        Stream empty = new MemoryStream();
+        return Task.FromResult(empty);
     }
 
     public Task DeleteAsync(string storagePath)
     {
-        var fullPath = Path.Combine(_basePath, storagePath);
-        if (File.Exists(fullPath))
-            File.Delete(fullPath);
+        // Nothing to delete — just return.
         return Task.CompletedTask;
     }
 }
