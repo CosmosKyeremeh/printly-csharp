@@ -1,14 +1,14 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using Printly.Core.Enums;
 
 namespace Printly.Infrastructure.Services;
 
 /// <summary>
-/// Reads the currently authenticated user's identity from the JWT claims.
-/// Injected into every service that needs to know who is making the request.
-///
-/// IHttpContextAccessor gives us access to the current HTTP request context
-/// from inside a service class (which normally has no knowledge of HTTP).
+/// Reads the current user identity from whichever auth scheme was used.
+/// For API calls this comes from JWT claims.
+/// For Razor Pages this comes from cookie claims (set by SignInManager).
+/// Both carry the same claim types because we added them via UserManager.AddClaimsAsync.
 /// </summary>
 public class CurrentUserService
 {
@@ -19,7 +19,6 @@ public class CurrentUserService
         _httpContextAccessor = httpContextAccessor;
     }
 
-    // The ClaimsPrincipal represents the logged-in user and their claims.
     private ClaimsPrincipal? User => _httpContextAccessor.HttpContext?.User;
 
     public Guid UserId
@@ -36,7 +35,9 @@ public class CurrentUserService
         get
         {
             var value = User?.FindFirstValue("orgId");
-            return value is null ? Guid.Empty : Guid.Parse(value);
+            if (value is null || string.IsNullOrWhiteSpace(value))
+                return Guid.Empty;
+            return Guid.TryParse(value, out var id) ? id : Guid.Empty;
         }
     }
 
@@ -47,7 +48,7 @@ public class CurrentUserService
         User?.FindFirstValue("isPlatformOwner") == "true";
 
     public bool IsAdmin =>
-        Role is "Admin" or "Superadmin" || IsPlatformOwner;
+        Role is "Admin" or "Superadmin" or "PlatformOwner" || IsPlatformOwner;
 
     public bool IsAuthenticated =>
         User?.Identity?.IsAuthenticated ?? false;

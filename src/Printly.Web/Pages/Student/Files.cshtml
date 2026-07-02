@@ -1,0 +1,83 @@
+﻿@page
+@model StudentFilesModel
+@{
+    ViewData["Title"] = "My Files";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-folder me-2 text-primary"></i>My Files</h4>
+    <a href="/student/upload" class="btn btn-primary btn-sm">
+        <i class="bi bi-upload me-1"></i>Upload New
+    </a>
+</div>
+
+@if (!Model.Files.Any())
+{
+    <div class="card text-center py-5 text-muted">
+        <i class="bi bi-folder-x fs-1"></i>
+        <p class="mt-2">No files uploaded yet</p>
+        <a href="/student/upload" class="btn btn-primary btn-sm mx-auto" style="width:fit-content">
+            Upload your first file
+        </a>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var file in Model.Files)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 p-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <i class="bi bi-file-earmark-text fs-2 text-primary"></i>
+                        <span class="badge badge-@file.Status.ToLower()">@file.Status</span>
+                    </div>
+                    <h6 class="text-truncate mb-1" title="@file.OriginalFileName">
+                        @file.OriginalFileName
+                    </h6>
+                    <p class="text-muted small mb-2">
+                        @((file.FileSizeBytes / 1024.0 / 1024.0).ToString("F2")) MB
+                        @if (file.CategoryName != null) { <span> · @file.CategoryName</span> }
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge badge-@file.PaymentStatus.ToLower()">@file.PaymentStatus</span>
+                        <strong>GHS @file.Price.ToString("F2")</strong>
+                    </div>
+                    @if (file.QueuePosition.HasValue)
+                    {
+                        <p class="small text-muted mb-2">Queue position: #@file.QueuePosition</p>
+                    }
+                    <div class="d-flex gap-2 mt-auto pt-2">
+                        <a href="/api/files/@file.Id/download" class="btn btn-sm btn-outline-primary flex-grow-1">
+                            <i class="bi bi-download"></i> Download
+                        </a>
+                        @if (file.Status == "Queued")
+                        {
+                            <button class="btn btn-sm btn-outline-danger"
+                                    onclick="deleteFile('@file.Id')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@section Scripts {
+<script>
+const token = sessionStorage.getItem("printly_token")
+           || document.cookie.split('; ').find(r => r.startsWith('printly_token='))?.split('=')[1];
+
+async function deleteFile(id) {
+    if (!confirm("Delete this file?")) return;
+    const res = await fetch(`/api/files/${id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` }
+    });
+    if (res.ok) location.reload();
+    else alert("Failed to delete file");
+}
+</script>
+}

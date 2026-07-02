@@ -1,0 +1,104 @@
+﻿@page
+@model AdminNotificationsModel
+@{
+    ViewData["Title"] = "Broadcast";
+}
+
+<h4 class="mb-4"><i class="bi bi-megaphone me-2 text-primary"></i>Broadcast Notification</h4>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card p-4">
+            <h6 class="mb-3">Send Announcement</h6>
+            <div class="mb-3">
+                <label class="form-label">Title</label>
+                <input type="text" class="form-control" id="notifTitle"
+                       placeholder="e.g. Assignment deadline reminder" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Message</label>
+                <textarea class="form-control" id="notifMessage" rows="4"
+                          placeholder="Write your message here..."></textarea>
+            </div>
+            <div class="mb-4">
+                <label class="form-label">Type</label>
+                <select class="form-select" id="notifType">
+                    <option value="General">General</option>
+                    <option value="Deadline">Deadline Reminder</option>
+                    <option value="PaymentReceived">Payment Received</option>
+                    <option value="PrintReady">Print Ready</option>
+                </select>
+            </div>
+            <button class="btn btn-primary w-100" onclick="sendNotification()">
+                <i class="bi bi-send me-2"></i>Send to All Students
+            </button>
+            <div id="sendStatus" class="mt-3"></div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-clock-history me-2"></i>Recent Announcements
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.Notifications.Any())
+                {
+                    <p class="text-muted text-center py-4">No announcements sent yet</p>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var n in Model.Notifications)
+                        {
+                            <li class="list-group-item bg-transparent border-secondary">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong>@n.Title</strong>
+                                        <span class="badge bg-secondary ms-2 small">@n.Type</span>
+                                        <p class="text-muted small mb-0 mt-1">@n.Message</p>
+                                    </div>
+                                    <small class="text-muted text-nowrap ms-3">
+                                        @n.CreatedAt.ToString("MMM d, HH:mm")
+                                    </small>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+const token = sessionStorage.getItem("printly_token")
+           || document.cookie.split('; ').find(r => r.startsWith('printly_token='))?.split('=')[1];
+
+async function sendNotification() {
+    const title   = document.getElementById("notifTitle").value.trim();
+    const message = document.getElementById("notifMessage").value.trim();
+    const type    = document.getElementById("notifType").value;
+    const status  = document.getElementById("sendStatus");
+
+    if (!title || !message) { alert("Title and message are required"); return; }
+
+    const res = await fetch("/api/notifications", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ title, message, type })
+    });
+
+    if (res.ok) {
+        status.innerHTML = '<div class="alert alert-success py-2">Sent successfully!</div>';
+        setTimeout(() => location.reload(), 1200);
+    } else {
+        status.innerHTML = '<div class="alert alert-danger py-2">Failed to send</div>';
+    }
+}
+</script>
+}

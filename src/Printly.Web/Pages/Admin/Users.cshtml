@@ -1,0 +1,89 @@
+﻿@page
+@model AdminUsersModel
+@{
+    ViewData["Title"] = "Users";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-people me-2 text-primary"></i>Users</h4>
+    <div class="input-group" style="max-width: 280px;">
+        <span class="input-group-text bg-dark border-secondary">
+            <i class="bi bi-clipboard text-primary"></i>
+        </span>
+        <input type="text" class="form-control bg-dark text-white border-secondary"
+               value="@Model.JoinCode" id="joinCodeField" readonly />
+        <button class="btn btn-outline-secondary"
+                onclick="navigator.clipboard.writeText('@Model.JoinCode');this.innerHTML='Copied!'">
+            Copy Join Code
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-dark table-hover mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model.Users)
+                {
+                    <tr>
+                        <td>@user.FullName</td>
+                        <td><small>@user.Email</small></td>
+                        <td><small>@(user.PhoneNumber ?? "—")</small></td>
+                        <td>
+                            <span class="badge @(user.Role == "Admin" || user.Role == "Superadmin"
+                                ? "bg-warning text-dark" : "bg-secondary")">
+                                @user.Role
+                            </span>
+                        </td>
+                        <td>
+                            @if (user.Role == "Student")
+                            {
+                                <button class="btn btn-sm btn-outline-warning"
+                                        onclick="changeRole('@user.Id', 'Admin')">
+                                    <i class="bi bi-arrow-up me-1"></i>Make Admin
+                                </button>
+                            }
+                            else if (user.Role == "Admin")
+                            {
+                                <button class="btn btn-sm btn-outline-secondary"
+                                        onclick="changeRole('@user.Id', 'Student')">
+                                    <i class="bi bi-arrow-down me-1"></i>Make Student
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+const token = sessionStorage.getItem("printly_token")
+           || document.cookie.split('; ').find(r => r.startsWith('printly_token='))?.split('=')[1];
+
+async function changeRole(userId, role) {
+    if (!confirm(`Change this user to ${role}?`)) return;
+    const res = await fetch(`/api/users/${userId}/role`, {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ role })
+    });
+    if (res.ok) location.reload();
+    else alert("Failed to change role");
+}
+</script>
+}
