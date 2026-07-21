@@ -37,18 +37,25 @@ builder.Services.AddIdentity<AppUser, IdentityRole<Guid>>(options =>
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("JWT key not configured.");
 
-builder.Services.AddAuthentication(options =>
-{
-    // Razor Pages will use cookie scheme by default
-    options.DefaultScheme = "CookieOrJwt";
-    options.DefaultChallengeScheme = "CookieOrJwt";
-})
-.AddCookie("Cookies", options =>
+// AddIdentity() above already registered its own cookie scheme
+// (IdentityConstants.ApplicationScheme) and pinned it as the default
+// authenticate scheme. We override that here so the policy scheme below
+// actually gets consulted — otherwise [Authorize] on API controllers
+// would authenticate against the Identity cookie only and JWT bearer
+// tokens would never be checked.
+builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/auth/login";
     options.AccessDeniedPath = "/auth/login";
     options.ExpireTimeSpan = TimeSpan.FromHours(8);
     options.SlidingExpiration = true;
+});
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = "CookieOrJwt";
+    options.DefaultAuthenticateScheme = "CookieOrJwt";
+    options.DefaultChallengeScheme = "CookieOrJwt";
 })
 .AddJwtBearer("JWT", options =>
 {
@@ -92,8 +99,8 @@ builder.Services.AddAuthentication(options =>
             path.StartsWithSegments("/hubs"))
             return "JWT";
 
-        // Everything else (Razor Pages) uses cookies
-        return "Cookies";
+        // Everything else (Razor Pages) uses the Identity cookie
+        return IdentityConstants.ApplicationScheme;
     };
 });
 

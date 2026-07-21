@@ -298,7 +298,6 @@ namespace Printly.Infrastructure.Migrations
                     PaymentStatus = table.Column<string>(type: "TEXT", nullable: false),
                     DeletedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     OrgId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    OrganizationId = table.Column<Guid>(type: "TEXT", nullable: false),
                     UserId = table.Column<Guid>(type: "TEXT", nullable: false),
                     CategoryId = table.Column<Guid>(type: "TEXT", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
@@ -319,8 +318,8 @@ namespace Printly.Infrastructure.Migrations
                         principalTable: "Categories",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_FileRecords_Organizations_OrganizationId",
-                        column: x => x.OrganizationId,
+                        name: "FK_FileRecords_Organizations_OrgId",
+                        column: x => x.OrgId,
                         principalTable: "Organizations",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -335,7 +334,6 @@ namespace Printly.Infrastructure.Migrations
                     FileRecordId = table.Column<Guid>(type: "TEXT", nullable: false),
                     UserId = table.Column<Guid>(type: "TEXT", nullable: false),
                     OrgId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    OrganizationId = table.Column<Guid>(type: "TEXT", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
@@ -355,8 +353,8 @@ namespace Printly.Infrastructure.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_FileComments_Organizations_OrganizationId",
-                        column: x => x.OrganizationId,
+                        name: "FK_FileComments_Organizations_OrgId",
+                        column: x => x.OrgId,
                         principalTable: "Organizations",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -376,7 +374,6 @@ namespace Printly.Infrastructure.Migrations
                     FileRecordId = table.Column<Guid>(type: "TEXT", nullable: false),
                     UserId = table.Column<Guid>(type: "TEXT", nullable: false),
                     OrgId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    OrganizationId = table.Column<Guid>(type: "TEXT", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
@@ -396,8 +393,8 @@ namespace Printly.Infrastructure.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Payments_Organizations_OrganizationId",
-                        column: x => x.OrganizationId,
+                        name: "FK_Payments_Organizations_OrgId",
+                        column: x => x.OrgId,
                         principalTable: "Organizations",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -417,7 +414,6 @@ namespace Printly.Infrastructure.Migrations
                     ActionedById = table.Column<Guid>(type: "TEXT", nullable: true),
                     FileRecordId = table.Column<Guid>(type: "TEXT", nullable: false),
                     OrgId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    OrganizationId = table.Column<Guid>(type: "TEXT", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
@@ -436,8 +432,8 @@ namespace Printly.Infrastructure.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_PrintQueueItems_Organizations_OrganizationId",
-                        column: x => x.OrganizationId,
+                        name: "FK_PrintQueueItems_Organizations_OrgId",
+                        column: x => x.OrgId,
                         principalTable: "Organizations",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -511,9 +507,9 @@ namespace Printly.Infrastructure.Migrations
                 column: "FileRecordId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_FileComments_OrganizationId",
+                name: "IX_FileComments_OrgId",
                 table: "FileComments",
-                column: "OrganizationId");
+                column: "OrgId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_FileComments_UserId",
@@ -526,9 +522,9 @@ namespace Printly.Infrastructure.Migrations
                 column: "CategoryId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_FileRecords_OrganizationId",
+                name: "IX_FileRecords_OrgId",
                 table: "FileRecords",
-                column: "OrganizationId");
+                column: "OrgId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_FileRecords_UserId",
@@ -557,9 +553,9 @@ namespace Printly.Infrastructure.Migrations
                 column: "FileRecordId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Payments_OrganizationId",
+                name: "IX_Payments_OrgId",
                 table: "Payments",
-                column: "OrganizationId");
+                column: "OrgId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Payments_UserId",
@@ -578,9 +574,9 @@ namespace Printly.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_PrintQueueItems_OrganizationId",
+                name: "IX_PrintQueueItems_OrgId",
                 table: "PrintQueueItems",
-                column: "OrganizationId");
+                column: "OrgId");
         }
 
         /// <inheritdoc />

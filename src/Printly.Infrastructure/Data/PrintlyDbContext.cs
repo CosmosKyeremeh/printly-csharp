@@ -152,6 +152,16 @@ public class PrintlyDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, G
                   .WithOne(p => p.FileRecord)
                   .HasForeignKey(p => p.FileRecordId)
                   .OnDelete(DeleteBehavior.Cascade);
+
+            // Without this, EF's convention can't match the "OrgId" scalar
+            // to the "Organization" navigation (it looks for "OrganizationId"
+            // by default) and silently adds a second, unused shadow FK column
+            // that never gets populated — causing every insert to fail its
+            // foreign key constraint.
+            entity.HasOne(f => f.Organization)
+                  .WithMany()
+                  .HasForeignKey(f => f.OrgId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
 
         // ── 5. PAYMENT CONFIGURATION ───────────────────────────────────────
@@ -165,6 +175,11 @@ public class PrintlyDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, G
 
             entity.Property(p => p.Amount)
                   .HasColumnType("decimal(18,2)");
+
+            entity.HasOne(p => p.Organization)
+                  .WithMany()
+                  .HasForeignKey(p => p.OrgId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
 
         // ── 6. NOTIFICATION CONFIGURATION ─────────────────────────────────
@@ -173,6 +188,21 @@ public class PrintlyDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, G
             entity.Property(n => n.Type)
                   .HasConversion<string>();
         });
+
+        // ── 7. PRINTQUEUEITEM / FILECOMMENT ORG LINK ───────────────────────
+        // Same "OrgId" vs. convention-guessed "OrganizationId" mismatch as
+        // FileRecord/Payment above.
+        builder.Entity<PrintQueueItem>()
+            .HasOne(q => q.Organization)
+            .WithMany()
+            .HasForeignKey(q => q.OrgId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<FileComment>()
+            .HasOne(c => c.Organization)
+            .WithMany()
+            .HasForeignKey(c => c.OrgId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
     // ── SaveChangesAsync Override ──────────────────────────────────────────

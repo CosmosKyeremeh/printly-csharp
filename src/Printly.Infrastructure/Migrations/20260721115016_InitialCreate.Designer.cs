@@ -11,7 +11,7 @@ using Printly.Infrastructure.Data;
 namespace Printly.Infrastructure.Migrations
 {
     [DbContext(typeof(PrintlyDbContext))]
-    [Migration("20260721062538_InitialCreate")]
+    [Migration("20260721115016_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -343,9 +343,6 @@ namespace Printly.Infrastructure.Migrations
                     b.Property<Guid>("OrgId")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("TEXT");
-
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT");
 
@@ -356,7 +353,7 @@ namespace Printly.Infrastructure.Migrations
 
                     b.HasIndex("FileRecordId");
 
-                    b.HasIndex("OrganizationId");
+                    b.HasIndex("OrgId");
 
                     b.HasIndex("UserId");
 
@@ -386,9 +383,6 @@ namespace Printly.Infrastructure.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<Guid>("OrgId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("OrganizationId")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("OriginalFileName")
@@ -429,7 +423,7 @@ namespace Printly.Infrastructure.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.HasIndex("OrganizationId");
+                    b.HasIndex("OrgId");
 
                     b.HasIndex("UserId");
 
@@ -541,9 +535,6 @@ namespace Printly.Infrastructure.Migrations
                     b.Property<Guid>("OrgId")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("TEXT");
-
                     b.Property<DateTime?>("PaidAt")
                         .HasColumnType("TEXT");
 
@@ -561,7 +552,7 @@ namespace Printly.Infrastructure.Migrations
 
                     b.HasIndex("FileRecordId");
 
-                    b.HasIndex("OrganizationId");
+                    b.HasIndex("OrgId");
 
                     b.HasIndex("UserId");
 
@@ -592,9 +583,6 @@ namespace Printly.Infrastructure.Migrations
                     b.Property<Guid>("OrgId")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("OrganizationId")
-                        .HasColumnType("TEXT");
-
                     b.Property<DateTime?>("PrintedAt")
                         .HasColumnType("TEXT");
 
@@ -617,7 +605,7 @@ namespace Printly.Infrastructure.Migrations
                     b.HasIndex("FileRecordId")
                         .IsUnique();
 
-                    b.HasIndex("OrganizationId");
+                    b.HasIndex("OrgId");
 
                     b.ToTable("PrintQueueItems");
                 });
@@ -731,7 +719,7 @@ namespace Printly.Infrastructure.Migrations
 
                     b.HasOne("Printly.Core.Entities.Organization", "Organization")
                         .WithMany()
-                        .HasForeignKey("OrganizationId")
+                        .HasForeignKey("OrgId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -756,7 +744,7 @@ namespace Printly.Infrastructure.Migrations
 
                     b.HasOne("Printly.Core.Entities.Organization", "Organization")
                         .WithMany()
-                        .HasForeignKey("OrganizationId")
+                        .HasForeignKey("OrgId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -802,7 +790,7 @@ namespace Printly.Infrastructure.Migrations
 
                     b.HasOne("Printly.Core.Entities.Organization", "Organization")
                         .WithMany()
-                        .HasForeignKey("OrganizationId")
+                        .HasForeignKey("OrgId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -833,7 +821,7 @@ namespace Printly.Infrastructure.Migrations
 
                     b.HasOne("Printly.Core.Entities.Organization", "Organization")
                         .WithMany()
-                        .HasForeignKey("OrganizationId")
+                        .HasForeignKey("OrgId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

@@ -492,3 +492,6 @@ appsettings.Development.json
 *.db
 *.db-shm
 *.db-wal
+
+# Local file uploads (dev storage)
+src/Printly.Web/uploads/
