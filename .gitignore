@@ -487,3 +487,8 @@ appsettings.Development.json
 # VS Code specific
 .vscode/
 *.code-workspace
+
+# Local SQLite dev database
+*.db
+*.db-shm
+*.db-wal

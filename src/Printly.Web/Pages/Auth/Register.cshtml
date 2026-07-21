@@ -18,8 +18,12 @@
 <div class="card p-4 shadow-lg" style="width: 100%; max-width: 420px;">
     <div class="text-center mb-4">
         <i class="bi bi-printer-fill text-primary fs-1"></i>
-        <h2 class="fw-bold mt-2">Join Printly</h2>
-        <p class="text-muted small">Create your account to get started</p>
+        <h2 class="fw-bold mt-2">@(Model.IsFirstAccount ? "Set Up Printly" : "Join Printly")</h2>
+        <p class="text-muted small">
+            @(Model.IsFirstAccount
+                ? "You're the first user — create your organisation to get started"
+                : "Create your account to get started")
+        </p>
     </div>
 
     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
@@ -43,14 +47,28 @@
             <input type="password" name="Password" class="form-control"
                    placeholder="Min. 8 characters" required />
         </div>
-        <div class="mb-4">
-            <label class="form-label">
-                Class Join Code
-                <span class="text-muted small">(get this from your class rep)</span>
-            </label>
-            <input type="text" name="JoinCode" class="form-control text-uppercase"
-                   placeholder="e.g. X7K2PQ" maxlength="6" required />
-        </div>
+        @if (Model.IsFirstAccount)
+        {
+            <div class="mb-4">
+                <label class="form-label">
+                    Organisation Name
+                    <span class="text-muted small">(you'll get a join code to share afterwards)</span>
+                </label>
+                <input type="text" name="OrgName" class="form-control"
+                       placeholder="e.g. Printly Class of 2026" required />
+            </div>
+        }
+        else
+        {
+            <div class="mb-4">
+                <label class="form-label">
+                    Class Join Code
+                    <span class="text-muted small">(get this from your class rep)</span>
+                </label>
+                <input type="text" name="JoinCode" class="form-control text-uppercase"
+                       placeholder="e.g. X7K2PQ" maxlength="6" required />
+            </div>
+        }
         <button type="submit" class="btn btn-primary w-100">
             <i class="bi bi-person-plus me-2"></i>Create Account
         </button>

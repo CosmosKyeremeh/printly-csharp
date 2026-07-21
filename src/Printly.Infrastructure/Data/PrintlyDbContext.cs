@@ -172,12 +172,6 @@ public class PrintlyDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, G
         {
             entity.Property(n => n.Type)
                   .HasConversion<string>();
-
-            // ReadByUserIds is stored as a native PostgreSQL uuid[] array.
-            // Npgsql (the Postgres driver) handles the serialization
-            // between List<Guid> in C# and uuid[] in Postgres automatically.
-            entity.Property(n => n.ReadByUserIds)
-                  .HasColumnType("uuid[]");
         });
     }
 

@@ -15,7 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ── 1. DATABASE ────────────────────────────────────────────────────────────
 builder.Services.AddDbContext<PrintlyDbContext>(options =>
-    options.UseNpgsql(
+    options.UseSqlite(
         builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // ── 2. IDENTITY ────────────────────────────────────────────────────────────
